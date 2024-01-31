@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Recognition</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            height: 100vh;
+            display: flex;
+        }
+
+        #sidebar {
+            width: 20%;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #3498db;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+
+        li {
+            padding: 10px;
+            margin: 5px 0;
+            background: #34495e;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        li:hover {
+            background: #2c3e50;
+        }
+
+        #content {
+            flex: 1;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #uploadArea {
+            text-align: center;
+        }
+
+        #imageInput {
+            margin: 20px;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        #selectedImage {
+            max-width: 100%;
+            margin-top: 20px;
+            display: none;
+        }
+
+        #resultArea {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h1>Recognition Types</h1>
+        <ul>
+            <li onclick="selectType('Animal')">Animal</li>
+            <li onclick="selectType('Plant')">Plant</li>
+            <li onclick="selectType('Face')">Face</li>
+            <li onclick="selectType('General')">General</li>
+            <li onclick="selectType('Text')">Text Recognition</li>
+            <li onclick="selectType('Translation')">Text Translation</li>
+        </ul>
+    </div>
+
+    <div id="content">
+        <h1 id="selectedType">Object Recognition</h1>
+
+        <div id="uploadArea">
+            <input type="file" id="imageInput" accept="image/*" onchange="displaySelectedImage()">
+            <button onclick="uploadImage()">Recognize</button>
+        </div>
+
+        <img id="selectedImage" alt="Selected Image">
+
+        <div id="resultArea">
+            <!-- Recognition results will be displayed here -->
+            <p id="recognitionResult"></p>
+        </div>
+    </div>
+
+    <script>
+        function selectType(type) {
+            document.getElementById('selectedType').innerText = type + ' Recognition';
+            // You can add logic to handle the selected type
+            console.log("Selected Type: " + type);
+        }
+
+        function uploadImage() {
+            var input = document.getElementById('imageInput');
+            var uploadButton = document.querySelector('button');
+
+            if (input.files && input.files[0]) {
+                var formData = new FormData();
+                formData.append('file', input.files[0]);
+
+                // 显示加载状态
+                uploadButton.textContent = 'Recognizing...';
+                uploadButton.disabled = true;
+
+                fetch('/recognize', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(result => {
+                    console.log("Received Recognition Result:", result);
+                    displayRecognitionResult(result);
+                })
+                .catch(error => {
+                    console.error('识别失败', error);
+                })
+                .finally(() => {
+                    // 隐藏加载状态
+                    uploadButton.textContent = 'Recognize';
+                    uploadButton.disabled = false;
+                });
+
+            }
+        }
+
+
+        function displaySelectedImage() {
+            var input = document.getElementById('imageInput');
+            var img = document.getElementById('selectedImage');
+
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function displayRecognitionResult(result) {
+            var resultArea = document.getElementById('resultArea');
+            var recognitionResult = document.getElementById('recognitionResult');
+
+            // 检查 result 是否为 undefined
+            if (result && result.result_index !== undefined) {
+                // 显示识别结果
+                recognitionResult.innerText = "Result Index: " + result.result_index + ", Confidence: " + result.confidence;
+            } else {
+                // 如果 result 为 undefined，则显示错误消息
+                recognitionResult.innerText = "Recognition result is undefined or missing result_index";
+            }
+
+            resultArea.style.display = 'block';
+        }
+
+
+
+    </script>
+</body>
+</html>
